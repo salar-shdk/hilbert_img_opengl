@@ -1,0 +1,94 @@
+#!/bin/bash
+
+BUILD_TYPE="Release"
+BUILD_DIR="$BUILD_TYPE"
+COMPILER="GCC"
+CORES_COUNT=$(expr `nproc` - 2)
+OPTION=""
+
+build()
+{
+    # Keeping build start time in seconds
+	start=`date +%s`
+
+	if [ -d "$BUILD_DIR" ] && [ ! -f "$BUILD_DIR/.$COMPILER" ]
+	then
+		clean
+	fi
+
+	root=$(pwd)
+	mkdir -pv "$BUILD_DIR"
+	cd "$BUILD_DIR"
+
+	touch ."$COMPILER"
+	cmake -DCMAKE_BUILD_TYPE="$BUILD_TYPE" -DCOMPILER="$COMPILER" .. 2>&1 | tee ../build.log
+
+	sync
+	unbuffer make $MAKE_INSTALL -j ${CORES_COUNT} 2>&1 | tee -a ../build.log
+	end=`date +%s`
+
+	cd ..
+	duration
+}
+
+
+clean()
+{
+	echo "Cleaning ..."
+	rm -rf $BUILD_DIR
+	rm -f build.log
+	echo "Cleaning completed."
+}
+
+duration()
+{
+	duration=$((end - $start))
+	echo | tee -a ./build.log
+	echo "################################################################################" | tee -a ./build.log
+	echo "Build time: $duration (s)" | tee -a ./build.log
+	echo "################################################################################" | tee -a ./build.log
+	echo | tee -a ./build.log	
+}
+
+setOption()
+{
+	if [ -z "$OPTION" ]
+	then
+		OPTION=$1
+	else
+		echo "Too many command-line arguments"
+		help
+		exit
+	fi
+}
+
+# Read arguments
+for argument in $@; do
+	# Separate key-value pairs
+	key=`echo $argument | cut -d'=' -f1`
+	value=`echo $argument | cut -s -d'=' -f2-`
+
+	case "$key" in
+	"--clean" | "-c" | "c")
+		setOption "CLEAN"
+		;;
+	"--full" | "-f" | "f")
+		setOption "FULL"
+		;;
+    esac
+done
+
+case "$OPTION" in
+	"CLEAN")
+		clean
+		;;
+	"FULL")
+		clean
+		build
+		;;
+	*)
+		build
+		;;
+	esac
+
+exit
