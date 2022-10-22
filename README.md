@@ -1,6 +1,6 @@
 # hilbert_img
 
-This project creates a hilbert curve and sets the colors according to the given image. For example consider we are using this picture.
+This project creates a hilbert curve and sets the colors according to the given image and draws it using opengl. For example consider we are using this picture.
 
 ![img](https://user-images.githubusercontent.com/33146532/195764634-1e96fb2c-d020-4ac5-a460-ab45b88e7239.jpg)
 
